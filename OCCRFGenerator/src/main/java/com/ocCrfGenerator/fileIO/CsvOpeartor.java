@@ -22,8 +22,8 @@ public class CsvOpeartor {
 			CsvToBean csv = new CsvToBean();
 			List<OcCrf> listparticipantsDetails = csv.parse(setColumMapping(), csvReader);
 
-			for (OcCrf sampleCRF :listparticipantsDetails ) {
-				System.out.println(sampleCRF);
+			for (OcCrf ocCrf :listparticipantsDetails ) {
+				System.out.println(ocCrf);
 			}
 
 			return listparticipantsDetails;

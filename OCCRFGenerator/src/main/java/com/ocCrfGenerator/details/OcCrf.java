@@ -133,7 +133,7 @@ public class OcCrf {
 
 	@Override
 	public String toString() {
-		return "SampleCRF [parentId=" + parentId + ", parentType=" + parentType + ", studyId=" + studyId + ", siteId="
+		return "OcCRF [parentId=" + parentId + ", parentType=" + parentType + ", studyId=" + studyId + ", siteId="
 				+ siteId + ", crfId=" + crfId + ", questionId=" + questionId + ", answerId=" + answerId + ", type="
 				+ type + ", title=" + title + ", label=" + label + ", questionType=" + questionType
 				+ ", questionMandatory=" + questionMandatory + ", questiondefault=" + questiondefault + "]";
