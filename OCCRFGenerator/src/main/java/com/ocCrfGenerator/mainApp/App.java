@@ -13,7 +13,7 @@ public class App
 		ExcelOperator excelOperator = new ExcelOperator();
 
 		List<OcCrf> list = csvOperator.csvFileRead("/home/neha/eclipse/sampleTestCRF.csv") ;
-		excelOperator.excelFilewriter("sampletestCRF.xls", list);  
+		excelOperator.excelFilewriter("newCRF.xls", list);  
 	}
 
 }
