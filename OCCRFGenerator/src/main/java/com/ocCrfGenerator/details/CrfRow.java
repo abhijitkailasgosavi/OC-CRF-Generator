@@ -1,6 +1,6 @@
 package com.ocCrfGenerator.details;
 
-public class OcCrf {
+public class CrfRow {
 	private String parentId;
 
 	private String parentType;
@@ -26,6 +26,20 @@ public class OcCrf {
 	private String questionMandatory;
 
 	private String questiondefault;
+
+	public CrfRow() {
+
+	}
+
+	public CrfRow(String questionId, String answerId, String type, String title, String label, String questionType) {
+		this.questionId = questionId;
+		this.answerId = answerId;
+		this.type = type;
+		this.title = title;
+		this.label = label;
+		this.questionType = questionType;
+	}
+
 
 	public String getParentId() {
 		return parentId;
