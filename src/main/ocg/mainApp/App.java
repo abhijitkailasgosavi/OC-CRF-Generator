@@ -9,7 +9,6 @@ public class App
 		CRFGenerator fileOperator2 = new CRFGeneratorImpl();
 
 		fileOperator2.fileReadWrite("/home/neha/eclipse/CRF_All_CodeBook.csv");
-		//fileOperator2.getDataType("Yes/No");
 	}
 
 }

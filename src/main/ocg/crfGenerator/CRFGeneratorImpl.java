@@ -16,31 +16,31 @@ import details.CrfRow;
 public class CRFGeneratorImpl implements CRFGenerator {
 
 	public static final String DEF_CRF_TEMPLATE_FILE = "sampleCRF/mySampleCRF.xls";
-	
+
 	public enum DataType { Select_one("ST","single-select"),
-							Number("INT","text"), 
-							Text("ST","text"),
-							Yes_No("ST","radio"),
-							Date("DATE","text"),
-							Select_many("ST","multi-select"),;
-		 					
-		                    private final String outputDataType;
-		                    
-		                    private final String outputResponseType;
-		                    
-							private DataType(String outputDataType,String outputResponseType) {
-					            this.outputDataType = outputDataType;  
-					            this.outputResponseType = outputResponseType;
-					        }
-							public String getOutputDataType() {
-					            return outputDataType;
-					        }
-							
-							public String getOutputResponseType() {
-					            return outputResponseType;
-					        }
-	  					} 
-	
+		Number("INT","text"), 
+		Text("ST","text"),
+		Yes_No("ST","radio"),
+		Date("DATE","text"),
+		Select_many("ST","multi-select"),;
+
+		private final String outputDataType;
+
+		private final String outputResponseType;
+
+		private DataType(String outputDataType,String outputResponseType) {
+			this.outputDataType = outputDataType;  
+			this.outputResponseType = outputResponseType;
+		}
+		public String getOutputDataType() {
+			return outputDataType;
+		}
+
+		public String getOutputResponseType() {
+			return outputResponseType;
+		}
+	} 
+
 	public void fileReadWrite(String inputFileName) throws Exception {
 		CSVReader csvReader = null;
 		FileOutputStream out =null;
@@ -51,12 +51,12 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		Row row = null;
 		String[] currentCrfRow = null;
 		String responseOptionText=null;
-		
+
 		try {  
 			csvReader = new CSVReader(new FileReader(inputFileName));
 			inputExcelFile = new FileInputStream(DEF_CRF_TEMPLATE_FILE);
 			workbook = new HSSFWorkbook(inputExcelFile);
-			
+
 			while ((currentCrfRow = csvReader.readNext()) != null )
 			{
 				CrfRow crfRow = createObject(currentCrfRow);
@@ -79,7 +79,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					row = sheet.createRow(++rowIndex);
 					String label = generateFormatedString(crfRow.getLabel());
 					responseOptionText = "";
-					
+
 					row.createCell(0).setCellValue(label);
 					row.createCell(1).setCellValue(crfRow.getTitle());
 					row.createCell(2).setCellValue(crfRow.getTitle());
@@ -92,7 +92,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					row.createCell(19).setCellValue(getDataType(crfRow.getQuestionType()));
 				} else if (crfRow.getType().equals("A")) {
 					responseOptionText += getResponseText(crfRow, responseOptionText);
-					
+
 					Cell cellResponseText =row.getCell(15);
 					Cell cellResponseValue =row.getCell(16);
 					cellResponseText.setCellValue("");
@@ -113,23 +113,23 @@ public class CRFGeneratorImpl implements CRFGenerator {
 	}
 
 	public  void removeRow(HSSFSheet sheet) {
-	    int lastRowNum = sheet.getLastRowNum();
-	   for (int i = 1; i<= lastRowNum; i++) {
-		   sheet.removeRow(sheet.getRow(i));
-	   }
+		int lastRowNum = sheet.getLastRowNum();
+		for (int i = 1; i<= lastRowNum; i++) {
+			sheet.removeRow(sheet.getRow(i));
+		}
 	}
-	
+
 	private String generateFormatedString(String label) {
 		label = label.replaceAll("[^a-zA-Z0-9]"," ");
 		label = label.replaceAll(" ", "_");
 		return label;
-		}
-	
+	}
+
 	private void setCrfName(HSSFSheet sheet, String crfName) {
 		Row row = sheet.createRow(1);
-	    row.createCell(0).setCellValue(crfName);
-	    row.createCell(1).setCellValue("1");
-	    row.createCell(3).setCellValue(crfName);
+		row.createCell(0).setCellValue(crfName);
+		row.createCell(1).setCellValue("1");
+		row.createCell(3).setCellValue(crfName);
 	}
 
 	private String getSectionLabel(HSSFWorkbook workbook) {
@@ -178,7 +178,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		}
 		return "text";
 	}
-	
+
 	private CrfRow  createObject(String[] row) {
 		CrfRow crfRow = new CrfRow();
 
