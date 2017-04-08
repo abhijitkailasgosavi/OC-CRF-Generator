@@ -40,6 +40,21 @@ public class CrfRow {
 		this.questionType = questionType;
 	}
 
+	public CrfRow(String[] row) {
+		this.parentId = row[0];
+		this.parentType = row[1];
+		this.studyId = row[2];
+		this.siteId = row[3];
+		this.crfId = row[4];
+		this.questionId = row[5];
+		this.answerId = row[6];
+		this.type = row[7];
+		this.title = row[8];
+		this.label = row[9];
+		this.questionType = row[10];
+		this.questionMandatory = row[11];
+		this.questiondefault = row[12];
+	}
 
 	public String getParentId() {
 		return parentId;
@@ -152,7 +167,4 @@ public class CrfRow {
 				+ type + ", title=" + title + ", label=" + label + ", questionType=" + questionType
 				+ ", questionMandatory=" + questionMandatory + ", questiondefault=" + questiondefault + "]";
 	}
-
-
-
 }
