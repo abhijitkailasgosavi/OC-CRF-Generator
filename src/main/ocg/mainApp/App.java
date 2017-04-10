@@ -15,7 +15,7 @@ public class App
 
 		CSVReader csvReader = csvFileReader.getcsvFileReader("inputFile.csv");
 		if ((filename = csvReader.readNext()) != null) {
-			fileOperator2.fileReadWrite(filename[0]);
+			fileOperator2.generateCRF(filename[0]);
 		}
 	}
 }

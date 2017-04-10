@@ -1,8 +1,10 @@
-﻿package crfGenerator;
+package crfGenerator;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -19,8 +21,9 @@ import xlsReader.XLSReaderImpl;
 public class CRFGeneratorImpl implements CRFGenerator {
 
 	public static final String DEF_CRF_TEMPLATE_FILE = "sampleCRF/mySampleCRF.xls";
+	public List<String> listOfLabels = new LinkedList<String>();
 
-	public void fileReadWrite(String inputFileName) throws Exception {
+	public void generateCRF(String inputFileName) {
 		CSVReader csvReader = null;
 		FileOutputStream out =null;
 		HSSFWorkbook workbook = null;
@@ -45,12 +48,14 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					if(workbook != null && crfCount != 0) {
 						workbook.write(out);
 					}
-					String filename = crfRow.getTitle()+".xls";
+					String filename = crfRow.getTitle() + ".xls";
 					filename = filename.replaceAll("/", "\\\\");	
+					System.out.println(filename + " is created");
 
 					out = new FileOutputStream("files/"+filename);
 					sheet = workbook.getSheet("Items");
 					xlsReader.removeRow(sheet);
+					listOfLabels.clear();
 					setCrfName( workbook.getSheet("CRF"),crfRow.getTitle());
 					rowIndex = 0;
 					i=0;
@@ -66,19 +71,24 @@ public class CRFGeneratorImpl implements CRFGenerator {
 			}
 			workbook.write(out);
 			System.out.println("Task completed");
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			inputExcelFile.close();
-			out.close();
-			csvReader.close();
+			try {
+				inputExcelFile.close();
+				out.close();
+				csvReader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 		}
 	}
 
 	private void setQuestionRow(Row row, CrfRow crfRow, XLSReader xlsReader, HSSFWorkbook workbook, int i){
 		String label = CsvFileReaderImpl.generateFormatedString(crfRow.getLabel());
 		CsvFileReaderImpl csvFileReaderImpl = new CsvFileReaderImpl();
-
+		label = generateUniqueLabel(label);
 		row.createCell(0).setCellValue(label);
 		row.createCell(1).setCellValue(crfRow.getTitle());
 		row.createCell(2).setCellValue(crfRow.getTitle());
@@ -89,6 +99,21 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		row.createCell(15).setCellValue("");
 		row.createCell(16).setCellValue("");
 		row.createCell(19).setCellValue(csvFileReaderImpl.getDataType(crfRow.getQuestionType()));
+	}
+
+	private String generateUniqueLabel(String label) {
+		int i = 0;
+
+		if (listOfLabels.isEmpty()) {
+			listOfLabels.add(label);
+			return label;
+		}
+		while(listOfLabels.contains(label)) {
+			label += i++;
+		}
+
+		listOfLabels.add(label);
+		return label;
 	}
 
 	private void setResponseTextAndValue(Row row, String responseOptionText) {
@@ -111,13 +136,12 @@ public class CRFGeneratorImpl implements CRFGenerator {
 	private String getResponseText(CrfRow crfRow, String responseOptionText) {
 		String title = crfRow.getTitle();
 		String newResponseText = "";
-		if (responseOptionText=="") {
-
+		if (responseOptionText == "") {
 			newResponseText = title;
 			return newResponseText;
 		}
-		newResponseText +=",";
-		newResponseText +=title;
+		newResponseText += ",";
+		newResponseText += title;
 		return newResponseText;
 	}
 }
