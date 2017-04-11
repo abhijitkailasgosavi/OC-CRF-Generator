@@ -36,15 +36,15 @@ public class CsvFileReaderImpl implements CsvFileReader {
 	} 
 
 
-	static public String generateFormatedString(String label) {
-		label = label.replaceAll("[^a-zA-Z0-9]"," ");
-		label = label.replaceAll(" ", "_");
-		return label;
+	static public String generateValidString(String input) {
+		input = input.replaceAll("[^a-zA-Z0-9]"," ");
+		input = input.replaceAll(" ", "_");
+		return input;
 	}
 
 
 	public String getDataType(String questionType) {
-		questionType = generateFormatedString(questionType);
+		questionType = generateValidString(questionType);
 		for(DataType dt : DataType.values()) {
 			if(questionType.equals(dt.toString())) {
 				return dt.getOutputDataType();
@@ -54,7 +54,7 @@ public class CsvFileReaderImpl implements CsvFileReader {
 	}
 
 	public String getResponseType(String questionType) {
-		questionType = generateFormatedString(questionType);
+		questionType = generateValidString(questionType);
 		for(DataType dt : DataType.values()) {
 			if(questionType.equals(dt.toString())) {
 				return dt.getOutputResponseType();
