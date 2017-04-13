@@ -1,119 +1,106 @@
-package crfGenerator;
+package ocg.crfGenerator;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.util.IOUtils;
 
-import au.com.bytecode.opencsv.CSVReader;
-import csvReader.CsvFileReader;
-import csvReader.CsvFileReaderImpl;
-import xlsReader.XLSReader;
-import xlsReader.XLSReaderImpl;
+import ocg.csvReader.CsvReaderImpl;
+import ocg.xlsReader.XLSReader;
+import ocg.xlsReader.XLSReaderImpl;
 
 public class CRFGeneratorImpl implements CRFGenerator {
-
 	public static final String DEF_CRF_TEMPLATE_FILE = "sampleCRF/mySampleCRF.xls";
+
+	public static Logger logger = Logger.getLogger(CRFGeneratorImpl.class.getName());
+
 	public List<String> listOfLabels = new LinkedList<String>();
 
+	private CsvReaderImpl csvReaderImpl;
+	
 	public void generateCRF(String inputCsv) {
-		CSVReader csvReader = null;
-		FileOutputStream out =null;
-		HSSFWorkbook workbook = null;
+		PropertyConfigurator.configure("log4j.properties");
+		FileOutputStream out = null;
 		HSSFSheet sheet = null;
-		FileInputStream inputExcelFile = null;
 		XLSReader xlsReader = new XLSReaderImpl();
-		CsvFileReader csvFileReader = (CsvFileReader) new CsvFileReaderImpl();
-		int rowIndex = 0, crfCount=0;
-		int i = 0;
+		csvReaderImpl = new CsvReaderImpl(inputCsv);
+		int rowIndex = 0, crfCount = 0;
+		int labelCount = 0;
 		Row row = null;
-		String[] currentCrfRow = null;
 
-		try {  
-			csvReader = csvFileReader.getcsvFileReader(inputCsv);
-			inputExcelFile = new FileInputStream(DEF_CRF_TEMPLATE_FILE);
-			workbook = xlsReader.newXLSReader(inputExcelFile);
-			Map<String,String> csvRow = new HashMap<String, String>();
-			final String[] columnNames = {"Parent ID", "Parent Type", "Study ID","Site ID","CRF ID","Question ID","Answer ID",
-					"Type","Title","Label","Question Type","Question Mandatory","Question Default"};
+		try {
+			FileInputStream inputExcelFile = new FileInputStream(DEF_CRF_TEMPLATE_FILE);
+			HSSFWorkbook workbook = xlsReader.newXLSReader(inputExcelFile);
 			String responseOptionText = null;
-
-			while ((currentCrfRow = csvReader.readNext()) != null )
-			{
-				for(int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-					csvRow.put(columnNames[columnIndex], currentCrfRow[columnIndex]); 
-				}
-				if (csvRow.get("Type").equals("CRF")) {
-					if(workbook != null && crfCount != 0) {
+			while (csvReaderImpl.hasNextRow()) {
+				if (csvReaderImpl.getColumnValue("Type").equals("CRF")) {
+					if (workbook != null && crfCount != 0) {
 						workbook.write(out);
 					}
-					String filename = csvRow.get("Title") + ".xls";
-					filename = filename.replaceAll("/", "\\\\");	
-					System.out.println(filename + " is created");
-					out = new FileOutputStream("files/"+filename);
+					String filename = csvReaderImpl.getColumnValue("Title") + ".xls";
+					filename = filename.replaceAll("/", "\\\\");
+					out = new FileOutputStream("files/" + filename);
+					logger.info(filename + " CRF is created");
+
 					sheet = workbook.getSheet("Items");
 					xlsReader.removeRow(sheet);
 					listOfLabels.clear();
-					setCrfName( workbook.getSheet("CRF"),csvRow.get("Title"));
+					setCrfName(workbook.getSheet("CRF"), csvReaderImpl.getColumnValue("Title"));
 					rowIndex = 0;
-					i=0;
+					labelCount = 0;
 					crfCount++;
-				} else if (csvRow.get("Type").equals("Q")) {
+				} else if (csvReaderImpl.getColumnValue("Type").equals("Q")) {
 					row = sheet.createRow(++rowIndex);
 					responseOptionText = "";
-					setQuestionRow(row,csvRow,xlsReader,workbook,i++);
-				} else if (csvRow.get("Type").equals("A")) {
-					responseOptionText += getResponseText(csvRow, responseOptionText);
-					setResponseTextAndValue(row,responseOptionText);
-				}				
+					setQuestionRow(row, xlsReader, workbook, labelCount++);
+				} else if (csvReaderImpl.getColumnValue("Type").equals("A")) {
+					responseOptionText += getResponseText(responseOptionText);
+					setResponseTextAndValue(row, responseOptionText);
+					logger.info("Response is created using answers : " + responseOptionText);
+				}
 			}
 			workbook.write(out);
-			System.out.println("Task completed");
+			logger.info("Task completed");
+			inputExcelFile.close();
+			out.close();
 		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				inputExcelFile.close();
-				out.close();
-				csvReader.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			IOUtils.closeQuietly(out);
+			logger.error("in generateCRF method " + e.getClass());
 		}
 	}
 
-	private void setQuestionRow(Row row, Map<String, String> csvRow, XLSReader xlsReader, HSSFWorkbook workbook, int i){
-		String label = CsvFileReaderImpl.generateValidString(csvRow.get("Label"));
-		CsvFileReaderImpl csvFileReaderImpl = new CsvFileReaderImpl();
+	private void setQuestionRow(Row row, XLSReader xlsReader, HSSFWorkbook workbook, int labelCount) {
+		String label = generateValidString(csvReaderImpl.getColumnValue("Label"));
+		logger.info("Question row is created with title" + label);
 		label = generateUniqueLabel(label);
 		row.createCell(0).setCellValue(label);
-		row.createCell(1).setCellValue(csvRow.get("Title"));
-		row.createCell(2).setCellValue(csvRow.get("Title"));
+		row.createCell(1).setCellValue(csvReaderImpl.getColumnValue("Title"));
+		row.createCell(2).setCellValue(csvReaderImpl.getColumnValue("Title"));
 		row.createCell(5).setCellValue(xlsReader.getSectionLabel(workbook));
 		row.createCell(6).setCellValue(xlsReader.getGroupLabel(workbook));
-		row.createCell(13).setCellValue(csvFileReaderImpl.getResponseType(csvRow.get("Question Type")));
-		row.createCell(14).setCellValue("A" + i);
+		row.createCell(13).setCellValue(getResponseType(csvReaderImpl.getColumnValue("Question Type")));
+		row.createCell(14).setCellValue("A" + labelCount);
 		row.createCell(15).setCellValue("");
 		row.createCell(16).setCellValue("");
-		row.createCell(19).setCellValue(csvFileReaderImpl.getDataType(csvRow.get("Question Type")));
+		row.createCell(19).setCellValue(getDataType(csvReaderImpl.getColumnValue("Question Type")));
 	}
 
 	private String generateUniqueLabel(String label) {
-		int i = 0;
+		int i = 1;
 
 		if (listOfLabels.isEmpty()) {
 			listOfLabels.add(label);
 			return label;
 		}
-		while(listOfLabels.contains(label)) {
+		while (listOfLabels.contains(label)) {
 			label += i++;
 		}
 		listOfLabels.add(label);
@@ -121,8 +108,8 @@ public class CRFGeneratorImpl implements CRFGenerator {
 	}
 
 	private void setResponseTextAndValue(Row row, String responseOptionText) {
-		Cell cellResponseText =row.getCell(15);
-		Cell cellResponseValue =row.getCell(16);
+		Cell cellResponseText = row.getCell(15);
+		Cell cellResponseValue = row.getCell(16);
 		cellResponseText.setCellValue("");
 		cellResponseValue.setCellValue("");
 		cellResponseText.setCellValue(responseOptionText);
@@ -136,8 +123,8 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		row.createCell(3).setCellValue(crfName);
 	}
 
-	private String getResponseText(Map<String, String> csvRow, String responseOptionText) {
-		String title = csvRow.get("Title");
+	private String getResponseText(String responseOptionText) {
+		String title = csvReaderImpl.getColumnValue("Title");
 		String newResponseText = "";
 		if (responseOptionText == "") {
 			newResponseText = title;
@@ -146,5 +133,53 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		newResponseText += ",";
 		newResponseText += title;
 		return newResponseText;
+	}
+	
+	public enum DataType {
+		Select_one("ST", "single-select"), Number("INT", "text"), Text("ST", "text"), Yes_No("ST",
+				"radio"), Date("DATE", "text"), Select_many("ST", "multi-select"),;
+
+		private final String outputDataType;
+
+		private final String outputResponseType;
+
+		private DataType(String outputDataType, String outputResponseType) {
+			this.outputDataType = outputDataType;
+			this.outputResponseType = outputResponseType;
+		}
+
+		public String getOutputDataType() {
+			return outputDataType;
+		}
+
+		public String getOutputResponseType() {
+			return outputResponseType;
+		}
+	}
+
+	static public String generateValidString(String input) {
+		input = input.replaceAll("[^a-zA-Z0-9]", " ");
+		input = input.replaceAll(" ", "_");
+		return input;
+	}
+
+	public String getDataType(String questionType) {
+		questionType = generateValidString(questionType);
+		for (DataType dt : DataType.values()) {
+			if (questionType.equals(dt.toString())) {
+				return dt.getOutputDataType();
+			}
+		}
+		return "ST";
+	}
+
+	public String getResponseType(String questionType) {
+		questionType = generateValidString(questionType);
+		for (DataType dt : DataType.values()) {
+			if (questionType.equals(dt.toString())) {
+				return dt.getOutputResponseType();
+			}
+		}
+		return "text";
 	}
 }

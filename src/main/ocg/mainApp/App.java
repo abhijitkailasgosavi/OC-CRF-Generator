@@ -1,21 +1,20 @@
-package mainApp;
+package ocg.mainApp;
+
+import java.io.FileReader;
 
 import au.com.bytecode.opencsv.CSVReader;
-import crfGenerator.CRFGenerator;
-import crfGenerator.CRFGeneratorImpl;
-import csvReader.CsvFileReader;
-import csvReader.CsvFileReaderImpl;
+import ocg.crfGenerator.CRFGenerator;
+import ocg.crfGenerator.CRFGeneratorImpl;
 
-public class App 
-{
+public class App {
 	public static void main(String[] args) throws Exception {
-		CsvFileReader csvFileReader = new CsvFileReaderImpl();
-		CRFGenerator fileOperator2 = new CRFGeneratorImpl();
+		CSVReader csvReader = new CSVReader(new FileReader("inputFile.csv"));
+		CRFGenerator fileOperator = new CRFGeneratorImpl();
 		String[] filename = null;
 
-		CSVReader csvReader = csvFileReader.getcsvFileReader("inputFile.csv");
 		if ((filename = csvReader.readNext()) != null) {
-			fileOperator2.generateCRF(filename[0]);
+			fileOperator.generateCRF(filename[0]);
 		}
+		csvReader.close();
 	}
 }
