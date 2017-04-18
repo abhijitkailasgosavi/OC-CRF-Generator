@@ -12,10 +12,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import ocg.crfGenerator.CRFGeneratorImpl;
 
 public class CsvReaderImpl implements CsvReader {
-
 	private CSVReader csvReader;
-
-	private int currentrowCount = 0;
 
 	private Map<String, Integer> columnNameIdxMap = new HashMap<String, Integer>();;
 
@@ -27,38 +24,38 @@ public class CsvReaderImpl implements CsvReader {
 			createColumnNameIdxMap();
 		} catch (FileNotFoundException e) {
 			IOUtils.closeQuietly(csvReader);
-			CRFGeneratorImpl.logger.error("in csv reader " + e.getMessage());
+			CRFGeneratorImpl.logger.error("In csv reader " + e.getMessage());
 		}
 	}
 
 	private void createColumnNameIdxMap() {
-		try {
-			if ((currentRow = csvReader.readNext()) != null) {
-				for (int columnIndex = 0; columnIndex < currentRow.length; columnIndex++) {
-					columnNameIdxMap.put(currentRow[columnIndex], columnIndex);
-				}
-				currentrowCount++;
+		if (hasNextRow()) {
+			for (int columnIndex = 0; columnIndex < currentRow.length; columnIndex++) {
+				columnNameIdxMap.put(currentRow[columnIndex], columnIndex);
 			}
-		} catch (IOException e) {
-			CRFGeneratorImpl.logger.error("reading headers " + e.getClass());
 		}
 	}
 
 	public boolean hasNextRow() {
 		try {
-			if ((currentRow = csvReader.readNext()) != null) {
-				CRFGeneratorImpl.logger.info("Csv current row " + currentrowCount);
-				currentrowCount++;
-				return true;
-			}
+			currentRow = csvReader.readNext();
 		} catch (IOException e) {
-			CRFGeneratorImpl.logger.error("in reading "+ currentrowCount +" row in csv file:" + e.getClass());
+			IOUtils.closeQuietly(csvReader);
+			CRFGeneratorImpl.logger.error("In reading row in csv file:" + e.getClass());
 		}
-		return false;
+		return currentRow != null;
 	}
 
 	public String getColumnValue(String columnHeader) {
 		int columnIndex = columnNameIdxMap.get(columnHeader);
 		return currentRow[columnIndex];
+	}
+
+	public void close() {
+		try {
+			csvReader.close();        
+		} catch (IOException e) {
+			CRFGeneratorImpl.logger.error("In closing csvReader:" + e.getClass());
+		}
 	}
 }

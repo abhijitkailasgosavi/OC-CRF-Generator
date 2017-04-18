@@ -1,7 +1,7 @@
 package ocg.csvReader;
 
 public interface CsvReader {
-	boolean hasNextRow();
+	public boolean hasNextRow();
 
-	String getColumnValue(String columnHeader);
+	public String getColumnValue(String columnHeader);
 }

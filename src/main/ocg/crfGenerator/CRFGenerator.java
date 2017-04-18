@@ -1,5 +1,9 @@
 package ocg.crfGenerator;
 
 public interface CRFGenerator {
-	void generateCRF(String inputFileName);
+	public void generateCRF(String inputFileName);
+
+	public String createCrfDir();
+
+	public String getCRFName();
 }

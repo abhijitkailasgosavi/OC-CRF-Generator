@@ -9,11 +9,11 @@ import ocg.crfGenerator.CRFGeneratorImpl;
 public class App {
 	public static void main(String[] args) throws Exception {
 		CSVReader csvReader = new CSVReader(new FileReader("inputFile.csv"));
-		CRFGenerator fileOperator = new CRFGeneratorImpl();
+		CRFGenerator crfGenerator = new CRFGeneratorImpl();
 		String[] filename = null;
 
 		if ((filename = csvReader.readNext()) != null) {
-			fileOperator.generateCRF(filename[0]);
+			crfGenerator.generateCRF(filename[0]);
 		}
 		csvReader.close();
 	}
