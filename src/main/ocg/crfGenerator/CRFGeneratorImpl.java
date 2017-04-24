@@ -45,7 +45,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					xlsWriter.crfWriter(crf);
 					String filename = getCrfName();
 					crf = xlsReader.getSampleCrf(filename);
-					xlsWriter = new XLSWriterImpl(filename, crf);
+					xlsWriter = new XLSWriterImpl(filename, crf, xlsReader.getHeaderNameIdxMap());
 					logger.info(filename + " CRF is created");
 					xlsWriter.addCrfDetails(csvReader.getColumnValue("Title"));
 					itemCount = 0;
@@ -61,6 +61,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 			logger.info("Task completed");
 		} catch (Exception e) {
 			logger.error("Error in generateCRF method " + e.getMessage());
+			e.printStackTrace();
 		} finally {
 			csvReader.close();
 			xlsWriter.close();

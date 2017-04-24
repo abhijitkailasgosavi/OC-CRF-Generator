@@ -1,4 +1,4 @@
-﻿package ocg.fileIoUtils;
+package ocg.fileIoUtils;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,11 +17,14 @@ import ocg.crfGenerator.CRFGeneratorImpl;
 public class XLSReaderImpl implements XLSReader {
 	HSSFWorkbook defaultXls;
 
+	private HashMap<String, Integer> headerNameIdxMap = new HashMap<String, Integer>();
+
 	public XLSReaderImpl(String defaultInputFile) {
 		InputStream inputExcelFile = null;
 		try {
 			inputExcelFile = new FileInputStream(defaultInputFile);
 			defaultXls = new HSSFWorkbook(inputExcelFile);
+			createHeaderIDxMap();
 		} catch (IOException e) {
 			IOUtils.closeQuietly(defaultXls);
 			CRFGeneratorImpl.logger.error("Error in sample excel reader :" + e.getMessage());
@@ -55,6 +58,10 @@ public class XLSReaderImpl implements XLSReader {
 		return row.getCell(0).getStringCellValue();
 	}
 
+	public HashMap<String, Integer> getHeaderNameIdxMap() {
+		return headerNameIdxMap;
+	}
+
 	private void createSampleCrf(String filename) {
 		FileOutputStream fout = null;
 		try {
@@ -65,5 +72,14 @@ public class XLSReaderImpl implements XLSReader {
 		} finally {
 			IOUtils.closeQuietly(fout);
 		}
+	}
+
+	private void createHeaderIDxMap() {
+		HSSFSheet sheet = defaultXls.getSheet("Items");
+		Row row = sheet.getRow(0);
+		for(int i = 0; i < row.getLastCellNum(); i++) {
+			String cname = row.getCell(i).getStringCellValue();
+			headerNameIdxMap.put(cname, i);
+		}	
 	}
 }

@@ -26,6 +26,8 @@ public class XLSWriterImpl implements XLSWriter {
 
 	private Row row;
 
+	private Map<String, Integer> headerNameIdxMap = new HashMap<String, Integer>();
+
 	//used for show/hide questions
 	private Map<String, ArrayList<String>> queAnswersMap = new HashMap<String, ArrayList<String>>();
 
@@ -38,11 +40,12 @@ public class XLSWriterImpl implements XLSWriter {
 	public XLSWriterImpl() {
 	}
 
-	public XLSWriterImpl(String filename, HSSFWorkbook crf) {
+	public XLSWriterImpl(String filename, HSSFWorkbook crf, Map<String, Integer> headerNameIdxMap) {
 		try {
 			out = new FileOutputStream(filename);
 			this.crf = crf;
 			items = this.crf.getSheet("Items");
+			this.headerNameIdxMap = headerNameIdxMap;
 		} catch (Exception e) {
 			IOUtils.closeQuietly(out);
 			CRFGeneratorImpl.logger.error("Error in creating excel writer :" + e.getMessage());
@@ -63,17 +66,17 @@ public class XLSWriterImpl implements XLSWriter {
 		questionId = csvReader.getColumnValue("Question ID");
 		question = label+"_"+itemCount;
 
-		row.createCell(0).setCellValue(question);
-		row.createCell(1).setCellValue(csvReader.getColumnValue("Title"));
-		row.createCell(2).setCellValue(csvReader.getColumnValue("Title"));
-		row.createCell(5).setCellValue(xlsReader.getSectionLabel(crf));
-		row.createCell(6).setCellValue(xlsReader.getGroupLabel(crf));
-		row.createCell(13).setCellValue(QuestionType.getResponseType(csvReader.getColumnValue("Question Type")));
-		row.createCell(14).setCellValue("A" + itemCount);
-		//create empty cells to write answers to response text & value
-		row.createCell(15).setCellValue("");        
-		row.createCell(16).setCellValue("");
-		row.createCell(19).setCellValue(QuestionType.getDataType(csvReader.getColumnValue("Question Type")));
+		setCellValue("ITEM_NAME",question);
+		setCellValue("DESCRIPTION_LABEL", csvReader.getColumnValue("Title"));
+		setCellValue("LEFT_ITEM_TEXT", csvReader.getColumnValue("Title"));
+		setCellValue("SECTION_LABEL", xlsReader.getSectionLabel(crf));
+		setCellValue("GROUP_LABEL", xlsReader.getGroupLabel(crf));
+		setCellValue("RESPONSE_TYPE", QuestionType.getResponseType(csvReader.getColumnValue("Question Type")));
+		setCellValue("RESPONSE_LABEL", "A" + itemCount);
+		setCellValue("RESPONSE_OPTIONS_TEXT", "");
+		setCellValue("RESPONSE_VALUES_OR_CALCULATIONS", "");
+		setCellValue("DATA_TYPE", QuestionType.getDataType(csvReader.getColumnValue("Question Type")));
+
 		CRFGeneratorImpl.logger.info("Question row is created with title" + label);
 
 		//for show/hide form data
@@ -83,8 +86,8 @@ public class XLSWriterImpl implements XLSWriter {
 			String condition = String.join(",", answerDataList);
 			String message = "Only provide answer if subject is" + answerDataList.get(1);
 
-			row.createCell(25).setCellValue("Hide");        
-			row.createCell(26).setCellValue(condition + "," +message);
+			setCellValue("ITEM_DISPLAY_STATUS", "Hide");
+			setCellValue("SIMPLE_CONDITIONAL_DISPLAY", condition + "," +message);
 		}
 		answersList.clear();
 	}
@@ -103,20 +106,6 @@ public class XLSWriterImpl implements XLSWriter {
 		CRFGeneratorImpl.logger.info("Response is created using answers : " + String.join(",", answersList));
 	}
 
-	private void createQueAnswersMap(String answerId, String answer, String queId, String que ) {
-		ArrayList<String> answerDataList = new ArrayList<String>();
-		answerDataList.add(que);
-		answerDataList.add(answer);
-		queAnswersMap.put(answerId, answerDataList);
-	}
-
-	private void addResponses(String response) {
-		if (StringUtils.isBlank(response)) {
-			return;
-		}
-		answersList.add(response);
-	}
-
 	public void crfWriter(HSSFWorkbook crf) {
 		if (crf != null) {
 			try {
@@ -131,6 +120,24 @@ public class XLSWriterImpl implements XLSWriter {
 		IOUtils.closeQuietly(out);
 	}
 
+	private void createQueAnswersMap(String answerId, String answer, String queId, String que ) {
+		ArrayList<String> answerDataList = new ArrayList<String>();
+		answerDataList.add(que);
+		answerDataList.add(answer);
+		queAnswersMap.put(answerId, answerDataList);
+	}
+
+	private void addResponses(String response) {
+		if (StringUtils.isBlank(response)) {
+			return;
+		}
+		answersList.add(response);
+	}
+
+	private void setCellValue(String columnName, String data) {
+		row.createCell(headerNameIdxMap.get(columnName)).setCellValue(data);;
+	}
+	
 	private String getItemName(String input) {
 		return input.replaceAll("[^a-zA-Z0-9]", "_");
 	}
