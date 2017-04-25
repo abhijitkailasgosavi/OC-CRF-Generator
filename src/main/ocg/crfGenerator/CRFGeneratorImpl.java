@@ -8,6 +8,8 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import ocg.connUtils.ConnUtilsImpl;
 import ocg.fileIoUtils.CsvReaderImpl;
+import ocg.fileIoUtils.ListCrfs;
+import ocg.fileIoUtils.ListCrfsImpl;
 import ocg.fileIoUtils.XLSReader;
 import ocg.fileIoUtils.XLSReaderImpl;
 import ocg.fileIoUtils.XLSWriter;
@@ -28,6 +30,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		csvReader = new CsvReaderImpl(inputCsv);
 		XLSWriter xlsWriter = new XLSWriterImpl();
 		ConnUtilsImpl connUtils = new ConnUtilsImpl();
+		ListCrfs listCrfs = new ListCrfsImpl();
 		Integer itemCount = 0;
 		try {
 			HSSFWorkbook crf = null;
@@ -47,8 +50,14 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					crf = xlsReader.getSampleCrf(filename);
 					xlsWriter = new XLSWriterImpl(filename, crf, xlsReader.getHeaderNameIdxMap());
 					logger.info(filename + " CRF is created");
-					xlsWriter.addCrfDetails(csvReader.getColumnValue("Title"));
+					String title = csvReader.getColumnValue("Title");
+					xlsWriter.addCrfDetails(title);
 					itemCount = 0;
+
+					String studyId = csvReader.getColumnValue("Study ID");
+					String siteId = csvReader.getColumnValue("Site ID");
+					String[] crfDetails = {studyId,siteId,title};
+					listCrfs.writeCrfDetails(crfDetails);
 				} else if (csvReader.getColumnValue("Type").equals("Q")) {
 					xlsWriter.addItem(xlsReader, csvReader, ++itemCount);
 				} else if (csvReader.getColumnValue("Type").equals("A")) {
@@ -65,6 +74,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		} finally {
 			csvReader.close();
 			xlsWriter.close();
+			listCrfs.close();
 		}
 	}
 
