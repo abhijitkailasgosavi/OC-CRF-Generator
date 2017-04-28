@@ -65,17 +65,24 @@ public class XLSWriterImpl implements XLSWriter {
 		String label =getItemName(csvReader.getColumnValue("Label"));
 		questionId = csvReader.getColumnValue("Question ID");
 		question = label+"_"+itemCount;
-
+		String responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question Type"));
+		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question Type"));
+		
+		if (StringUtils.isBlank(responseType) || StringUtils.isBlank(dataType)) {
+			CRFGeneratorImpl.logger.error("Question Type is wrong at line " +
+		                                   csvReader.getCurrentRowCount());
+		}
+		
 		setCellValue("ITEM_NAME",question);
 		setCellValue("DESCRIPTION_LABEL", csvReader.getColumnValue("Title"));
 		setCellValue("LEFT_ITEM_TEXT", csvReader.getColumnValue("Title"));
 		setCellValue("SECTION_LABEL", xlsReader.getSectionLabel(crf));
 		setCellValue("GROUP_LABEL", xlsReader.getGroupLabel(crf));
-		setCellValue("RESPONSE_TYPE", QuestionType.getResponseType(csvReader.getColumnValue("Question Type")));
+		setCellValue("RESPONSE_TYPE", responseType);
 		setCellValue("RESPONSE_LABEL", "A" + itemCount);
 		setCellValue("RESPONSE_OPTIONS_TEXT", "");
 		setCellValue("RESPONSE_VALUES_OR_CALCULATIONS", "");
-		setCellValue("DATA_TYPE", QuestionType.getDataType(csvReader.getColumnValue("Question Type")));
+		setCellValue("DATA_TYPE", dataType);
 
 		CRFGeneratorImpl.logger.info("Question row is created with title" + label);
 

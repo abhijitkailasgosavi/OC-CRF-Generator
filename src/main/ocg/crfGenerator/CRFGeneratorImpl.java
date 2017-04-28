@@ -31,32 +31,32 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		XLSWriter xlsWriter = new XLSWriterImpl();
 		ConnUtilsImpl connUtils = new ConnUtilsImpl();
 		ListCrfs listCrfs = new ListCrfsImpl();
+		String filepath = createCrfDir();
 		Integer itemCount = 0;
+		String studyUniqueId = null;
+		String siteUniqueId = null;
 		try {
 			HSSFWorkbook crf = null;
 			while (csvReader.hasNextRow()) {
 				if (csvReader.getColumnValue("Type").equals("Study")) {
 					String studyName = csvReader.getColumnValue("Title");
 					String studyId =  csvReader.getColumnValue("Study ID");
-					connUtils.createStudy(studyName, studyId);
+					studyUniqueId = connUtils.createStudy(studyName, studyId);
 				}  else if (csvReader.getColumnValue("Type").equals("Site")) {
 					String siteName = csvReader.getColumnValue("Title");
 					String siteId =  csvReader.getColumnValue("Site ID");
 					String parentStudyId = csvReader.getColumnValue("Parent ID");
-					connUtils.createSite(siteName, siteId, parentStudyId);
+					siteUniqueId = connUtils.createSite(siteName, siteId, parentStudyId);
 				} else if (csvReader.getColumnValue("Type").equals("CRF")) {
 					xlsWriter.crfWriter(crf);
 					String filename = getCrfName();
-					crf = xlsReader.getSampleCrf(filename);
-					xlsWriter = new XLSWriterImpl(filename, crf, xlsReader.getHeaderNameIdxMap());
+					crf = xlsReader.getSampleCrf(filepath + filename);
+					xlsWriter = new XLSWriterImpl(filepath + filename, crf, xlsReader.getHeaderNameIdxMap());
 					logger.info(filename + " CRF is created");
-					String title = csvReader.getColumnValue("Title");
-					xlsWriter.addCrfDetails(title);
+					xlsWriter.addCrfDetails(csvReader.getColumnValue("Title"));
 					itemCount = 0;
 
-					String studyId = csvReader.getColumnValue("Study ID");
-					String siteId = csvReader.getColumnValue("Site ID");
-					String[] crfDetails = {studyId,siteId,title};
+					String[] crfDetails = {studyUniqueId,siteUniqueId,filename};
 					listCrfs.writeCrfDetails(crfDetails);
 				} else if (csvReader.getColumnValue("Type").equals("Q")) {
 					xlsWriter.addItem(xlsReader, csvReader, ++itemCount);
@@ -92,9 +92,8 @@ public class CRFGeneratorImpl implements CRFGenerator {
 	}
 
 	private String getCrfName() {
-		String filepath = createCrfDir();
 		String filename = csvReader.getColumnValue("Title") + ".xls";
 		filename = filename.replaceAll("/", "\\\\");
-		return filepath + filename; 
+		return filename; 
 	}
 }

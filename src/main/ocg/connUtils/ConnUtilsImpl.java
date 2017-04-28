@@ -16,10 +16,11 @@ import ocg.crfGenerator.CRFGeneratorImpl;
 public class ConnUtilsImpl implements ConnUtils {
 	private Map<String, String> studyUId = new HashMap<String, String>();
 
-	public void createStudy(String title, String studyId) {
+	public String createStudy(String title, String studyId) {
 		HttpURLConnection conn = null;
 		OutputStream outputStream = null;
 		BufferedReader bufferedReader = null;
+		String uniqueProtocolID = null;
 		try {
 			URL url = new URL("http://localhost:8080/OpenClinica/pages/auth/api/v1/studies/");
 			conn = (HttpURLConnection) url.openConnection();
@@ -32,8 +33,8 @@ public class ConnUtilsImpl implements ConnUtils {
 			String basicAuth = "Basic " + new String(Base64.getEncoder().encode(apiKey.getBytes()));
 			conn.setRequestProperty ("Authorization", basicAuth);
 
-			String studyTitle = title +" " +studyId;
-			String uniqueProtocolID = title.substring(0, Math.min(title.length(), 15)) + " " + studyId;
+			String studyTitle = title;
+			uniqueProtocolID = title.substring(0, Math.min(title.length(), 15)) /*+ " " + studyId*/;
 			uniqueProtocolID = uniqueProtocolID.replaceAll("[^a-zA-Z0-9]", "_");
 			String input = "{\"briefTitle\": \"" + studyTitle + "\"," +
 					"\"principalInvestigator\": \"default\"," +
@@ -70,12 +71,14 @@ public class ConnUtilsImpl implements ConnUtils {
 			IOUtils.closeQuietly(bufferedReader);
 			conn.disconnect();
 		}
+		return uniqueProtocolID;
 	}
 
-	public void createSite(String title, String siteId, String studyId) {
+	public String createSite(String title, String siteId, String studyId) {
 		HttpURLConnection conn = null;
 		OutputStream outputStream = null;
 		BufferedReader bufferedReader = null;
+		String uniqueProtocolID = null;
 		try {
 			String studyUniqueId = studyUId.get(studyId);
 			String siteUrl =new String("http://localhost:8080/OpenClinica/pages/auth/api/v1/studies/"+studyUniqueId+"/sites");
@@ -90,9 +93,11 @@ public class ConnUtilsImpl implements ConnUtils {
 			String basicAuth = "Basic " + new String(Base64.getEncoder().encode(apiKey.getBytes()));
 			conn.setRequestProperty ("Authorization", basicAuth);
 
-			String siteTitle = title + " " + siteId;
-			String uniqueProtocolID = title.substring(0, Math.min(title.length(), 10)) 
-					+ "_" + studyId.substring(0, Math.min(studyId.length(), 5)) ;
+			String siteTitle = title.replaceAll("[^a-zA-Z0-9]", "_");
+			//uniqueProtocolID = title.substring(0, Math.min(title.length(), 10)) 
+			//		+ "_" + studyId.substring(0, Math.min(studyId.length(), 5)) ;
+			uniqueProtocolID = title.substring(0, Math.min(title.length(), 10)) 
+							+ "_" + siteId ;
 			uniqueProtocolID = uniqueProtocolID.replaceAll("[^a-zA-Z0-9]", "_");
 			String input ="{\"briefTitle\": \""+siteTitle+"\"," +
 					"\"principalInvestigator\": \"userz\", "+
@@ -125,5 +130,6 @@ public class ConnUtilsImpl implements ConnUtils {
 			IOUtils.closeQuietly(bufferedReader);
 			conn.disconnect();
 		}
+		return uniqueProtocolID;
 	}
 }

@@ -17,6 +17,8 @@ public class CsvReaderImpl implements CsvReader {
 	private Map<String, Integer> columnNameIdxMap = new HashMap<String, Integer>();
 
 	private String[] currentRow;
+	
+	private long currentRowCount = 0;
 
 	public CsvReaderImpl(String inputCsv) {
 		try {
@@ -31,6 +33,7 @@ public class CsvReaderImpl implements CsvReader {
 	public boolean hasNextRow() {
 		try {
 			currentRow = csvReader.readNext();
+			currentRowCount++;
 		} catch (IOException e) {
 			IOUtils.closeQuietly(csvReader);
 			CRFGeneratorImpl.logger.error("Error In reading row in csv file:" + e.getMessage());
@@ -47,6 +50,10 @@ public class CsvReaderImpl implements CsvReader {
 		IOUtils.closeQuietly(csvReader);
 	}
 
+	public long getCurrentRowCount() {
+		return currentRowCount - 1;
+	}
+	
 	private void createColumnNameIdxMap() {
 		if (hasNextRow()) {
 			for (int columnIndex = 0; columnIndex < currentRow.length; columnIndex++) {

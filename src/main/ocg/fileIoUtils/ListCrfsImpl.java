@@ -33,7 +33,7 @@ public class ListCrfsImpl implements ListCrfs {
 	}
 
 	private void headerWrite() {
-		String [] header= "Study Id,Site Id,CRF Name".split(",");
+		String [] header= "Study Unique Id,Site Unique Id,CRF Name".split(",");
 		writer.writeNext(header);
 	}
 }
