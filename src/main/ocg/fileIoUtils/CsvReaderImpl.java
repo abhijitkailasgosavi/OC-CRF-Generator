@@ -17,7 +17,7 @@ public class CsvReaderImpl implements CsvReader {
 	private Map<String, Integer> columnNameIdxMap = new HashMap<String, Integer>();
 
 	private String[] currentRow;
-	
+
 	private long currentRowCount = 0;
 
 	public CsvReaderImpl(String inputCsv) {
@@ -53,7 +53,7 @@ public class CsvReaderImpl implements CsvReader {
 	public long getCurrentRowCount() {
 		return currentRowCount - 1;
 	}
-	
+
 	private void createColumnNameIdxMap() {
 		if (hasNextRow()) {
 			for (int columnIndex = 0; columnIndex < currentRow.length; columnIndex++) {

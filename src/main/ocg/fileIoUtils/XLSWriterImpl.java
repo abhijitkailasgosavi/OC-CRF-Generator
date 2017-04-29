@@ -67,12 +67,12 @@ public class XLSWriterImpl implements XLSWriter {
 		question = label+"_"+itemCount;
 		String responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question Type"));
 		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question Type"));
-		
+
 		if (StringUtils.isBlank(responseType) || StringUtils.isBlank(dataType)) {
 			CRFGeneratorImpl.logger.error("Question Type is wrong at line " +
-		                                   csvReader.getCurrentRowCount());
+					csvReader.getCurrentRowCount());
 		}
-		
+
 		setCellValue("ITEM_NAME",question);
 		setCellValue("DESCRIPTION_LABEL", csvReader.getColumnValue("Title"));
 		setCellValue("LEFT_ITEM_TEXT", csvReader.getColumnValue("Title"));
@@ -144,7 +144,7 @@ public class XLSWriterImpl implements XLSWriter {
 	private void setCellValue(String columnName, String data) {
 		row.createCell(headerNameIdxMap.get(columnName)).setCellValue(data);;
 	}
-	
+
 	private String getItemName(String input) {
 		return input.replaceAll("[^a-zA-Z0-9]", "_");
 	}

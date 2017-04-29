@@ -12,6 +12,6 @@ public interface XLSWriter {
 	public void addResponseTextAndValue(String answer, String answerId);
 
 	public void crfWriter(HSSFWorkbook samplecrf);
-	
+
 	public void close();
 }

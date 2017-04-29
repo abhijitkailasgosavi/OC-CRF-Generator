@@ -9,6 +9,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 
 import ocg.crfGenerator.CRFGeneratorImpl;
@@ -16,7 +17,7 @@ import ocg.crfGenerator.CRFGeneratorImpl;
 public class ConnUtilsImpl implements ConnUtils {
 	private Map<String, String> studyUId = new HashMap<String, String>();
 
-	public String createStudy(String title, String studyId) {
+	public String createStudy(String studyTitle, String studyId, String apiKey) {
 		HttpURLConnection conn = null;
 		OutputStream outputStream = null;
 		BufferedReader bufferedReader = null;
@@ -27,14 +28,11 @@ public class ConnUtilsImpl implements ConnUtils {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("POST");
 			conn.setRequestProperty("Content-Type","application/json;");
+			conn.setRequestProperty ("Authorization", "Basic " + apiKey);
 
-			String apiKey = "c8a82545104e4fd89938650fa70dbd23";
-			apiKey += ":";
-			String basicAuth = "Basic " + new String(Base64.getEncoder().encode(apiKey.getBytes()));
-			conn.setRequestProperty ("Authorization", basicAuth);
-
-			String studyTitle = title;
-			uniqueProtocolID = title.substring(0, Math.min(title.length(), 15)) /*+ " " + studyId*/;
+			studyTitle = studyTitle.replaceAll("[\"\']", "");
+			uniqueProtocolID = studyTitle.substring(0, Math.min(studyTitle.length(), 10)) +
+					"_" + studyId ;
 			uniqueProtocolID = uniqueProtocolID.replaceAll("[^a-zA-Z0-9]", "_");
 			String input = "{\"briefTitle\": \"" + studyTitle + "\"," +
 					"\"principalInvestigator\": \"default\"," +
@@ -53,8 +51,8 @@ public class ConnUtilsImpl implements ConnUtils {
 			outputStream.flush();
 
 			if (conn.getResponseCode() != 200 ) {
-				CRFGeneratorImpl.logger.error("Failed to create study" + title +
-						" : HTTP error code :" + conn.getResponseCode());
+				CRFGeneratorImpl.logger.error("Failed to create "+studyTitle+" study" +
+						" : HTTP error code :"+ conn.getResponseCode() +" " + conn.getResponseMessage());
 			} else {
 				bufferedReader = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 				String output;
@@ -65,7 +63,7 @@ public class ConnUtilsImpl implements ConnUtils {
 			}
 			studyUId.put(studyId, uniqueProtocolID);
 		} catch (Exception e) {
-			CRFGeneratorImpl.logger.error("Error in create study" + title + " "+e.getMessage());
+			CRFGeneratorImpl.logger.error("Error in create study" + studyTitle + " "+e.getMessage());
 		} finally {
 			IOUtils.closeQuietly(outputStream);
 			IOUtils.closeQuietly(bufferedReader);
@@ -74,7 +72,7 @@ public class ConnUtilsImpl implements ConnUtils {
 		return uniqueProtocolID;
 	}
 
-	public String createSite(String title, String siteId, String studyId) {
+	public String createSite(String siteTitle, String siteId, String studyId, String apiKey) {
 		HttpURLConnection conn = null;
 		OutputStream outputStream = null;
 		BufferedReader bufferedReader = null;
@@ -87,23 +85,16 @@ public class ConnUtilsImpl implements ConnUtils {
 			conn.setDoOutput(true);
 			conn.setRequestMethod("POST");
 			conn.setRequestProperty("Content-Type","application/json;");
+			conn.setRequestProperty ("Authorization", "Basic " + apiKey);
 
-			String apiKey = "c8a82545104e4fd89938650fa70dbd23";
-			apiKey += ":";
-			String basicAuth = "Basic " + new String(Base64.getEncoder().encode(apiKey.getBytes()));
-			conn.setRequestProperty ("Authorization", basicAuth);
-
-			String siteTitle = title.replaceAll("[^a-zA-Z0-9]", "_");
-			//uniqueProtocolID = title.substring(0, Math.min(title.length(), 10)) 
-			//		+ "_" + studyId.substring(0, Math.min(studyId.length(), 5)) ;
-			uniqueProtocolID = title.substring(0, Math.min(title.length(), 10)) 
-							+ "_" + siteId ;
+			siteTitle = siteTitle.replaceAll("[\"\']", "");
+			uniqueProtocolID = siteTitle.substring(0, Math.min(siteTitle.length(), 10)) 
+					+ "_" + siteId + "_" + studyId ;
 			uniqueProtocolID = uniqueProtocolID.replaceAll("[^a-zA-Z0-9]", "_");
 			String input ="{\"briefTitle\": \""+siteTitle+"\"," +
 					"\"principalInvestigator\": \"userz\", "+
 					"\"expectedTotalEnrollment\": \"10\","+
-					"\"assignUserRoles\": [{ \"username\" : \"user1\", \"role\" : \"Investigator\"}," +
-					"{ \"username\" : \"usera\", \"role\" : \"Clinical Research Coordinator\"}]," +
+					"\"assignUserRoles\": [{ \"username\" : \"usera\", \"role\" : \"Clinical Research Coordinator\"}]," +
 					"\"uniqueProtocolID\": \""+uniqueProtocolID+"\"," +
 					"\"startDate\": \"2017-06-11\"," +
 					"\"secondaryProtocolID\" : \""+uniqueProtocolID+"_2\" ," +
@@ -114,7 +105,8 @@ public class ConnUtilsImpl implements ConnUtils {
 			outputStream.flush();
 
 			if (conn.getResponseCode() != 200 ) {
-				CRFGeneratorImpl.logger.error("Failed : HTTP error code :" + conn.getResponseMessage());
+				CRFGeneratorImpl.logger.error("Failed to create "+ siteTitle +
+						" site HTTP error code :"+conn.getResponseCode() +" " + conn.getResponseMessage());
 			} else {
 				bufferedReader = new BufferedReader(new InputStreamReader((conn.getInputStream())));
 				String output;
@@ -124,12 +116,63 @@ public class ConnUtilsImpl implements ConnUtils {
 				}
 			}
 		} catch (Exception e) {
-			CRFGeneratorImpl.logger.error("Error in create site" + title + " "+e.getMessage());
+			CRFGeneratorImpl.logger.error("Error in create site" + siteTitle + " "+e.getMessage());
 		} finally {
 			IOUtils.closeQuietly(outputStream);
 			IOUtils.closeQuietly(bufferedReader);
 			conn.disconnect();
 		}
 		return uniqueProtocolID;
+	}
+
+	public String getUserApiKey(String username, String password) {
+		String apiKey = null;
+		HttpURLConnection conn = null;
+		OutputStream os = null;
+		BufferedReader br = null;
+		try {
+			URL url = new URL("http://localhost:8080/OpenClinica/pages/accounts/login");
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setDoOutput(true);
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json;");
+			String input = "{\"username\":\""+username+"\",\"password\":\""+password+"\"}";
+
+			os = conn.getOutputStream();
+			os.write(input.getBytes());
+			os.flush();
+
+			if (conn.getResponseCode() != 200) {
+				CRFGeneratorImpl.logger.error("Error in getting user apiKey " + conn.getResponseCode() +
+						" " + conn.getResponseCode() );
+			}
+
+			br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+			String reader;
+			String userDetails = null;
+			while ((reader = br.readLine()) != null) {
+				userDetails = reader;
+			}
+			userDetails = userDetails.replaceAll("[^a-zA-Z0-9]", " ");
+			userDetails = userDetails.replaceAll("\\s+", " ");
+			String[] userdetailsArray = userDetails.split(" ");
+			for (int i = 0; i<userdetailsArray.length; i++) {
+				if (userdetailsArray[i].equals("apiKey")) {
+					apiKey = userdetailsArray[i + 1];
+				}
+			}
+			apiKey += ":";
+			apiKey =  new String(Base64.getEncoder().encode(apiKey.getBytes()));
+		} catch (Exception e) {
+			CRFGeneratorImpl.logger.error("Error in getting user apiKey "+e.getMessage());
+		} finally {
+			conn.disconnect();
+			IOUtils.closeQuietly(br);
+			IOUtils.closeQuietly(os);
+		}
+		if (StringUtils.isBlank(apiKey)) {
+			CRFGeneratorImpl.logger.error("apiKey is null may be username or password are wrong");
+		}
+		return apiKey;
 	}
 }

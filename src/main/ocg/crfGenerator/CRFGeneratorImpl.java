@@ -25,7 +25,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 
 	private CsvReaderImpl csvReader;
 
-	public void generateCrf(String inputCsv) {
+	public void generateCrf(String inputCsv, String username, String password) {
 		XLSReader xlsReader = new XLSReaderImpl(DEF_CRF_TEMPLATE_FILE);
 		csvReader = new CsvReaderImpl(inputCsv);
 		XLSWriter xlsWriter = new XLSWriterImpl();
@@ -37,16 +37,17 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		String siteUniqueId = null;
 		try {
 			HSSFWorkbook crf = null;
+			String apiKey = connUtils.getUserApiKey(username, password);
 			while (csvReader.hasNextRow()) {
 				if (csvReader.getColumnValue("Type").equals("Study")) {
 					String studyName = csvReader.getColumnValue("Title");
 					String studyId =  csvReader.getColumnValue("Study ID");
-					studyUniqueId = connUtils.createStudy(studyName, studyId);
+					studyUniqueId = connUtils.createStudy(studyName, studyId,apiKey);
 				}  else if (csvReader.getColumnValue("Type").equals("Site")) {
 					String siteName = csvReader.getColumnValue("Title");
 					String siteId =  csvReader.getColumnValue("Site ID");
 					String parentStudyId = csvReader.getColumnValue("Parent ID");
-					siteUniqueId = connUtils.createSite(siteName, siteId, parentStudyId);
+					siteUniqueId = connUtils.createSite(siteName, siteId, parentStudyId,apiKey);
 				} else if (csvReader.getColumnValue("Type").equals("CRF")) {
 					xlsWriter.crfWriter(crf);
 					String filename = getCrfName();
