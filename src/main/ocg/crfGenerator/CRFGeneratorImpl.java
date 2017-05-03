@@ -71,7 +71,6 @@ public class CRFGeneratorImpl implements CRFGenerator {
 			logger.info("Task completed");
 		} catch (Exception e) {
 			logger.error("Error in generateCRF method " + e.getMessage());
-			e.printStackTrace();
 		} finally {
 			csvReader.close();
 			xlsWriter.close();

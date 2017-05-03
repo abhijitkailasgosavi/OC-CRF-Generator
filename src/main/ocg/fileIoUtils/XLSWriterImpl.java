@@ -35,7 +35,7 @@ public class XLSWriterImpl implements XLSWriter {
 
 	private String question;
 
-	private String questionId;
+	private String responseType;
 
 	public XLSWriterImpl() {
 	}
@@ -63,9 +63,8 @@ public class XLSWriterImpl implements XLSWriter {
 	public void addItem(XLSReader xlsReader, CsvReader csvReader, Integer itemCount) {
 		row = items.createRow(itemCount);
 		String label =getItemName(csvReader.getColumnValue("Label"));
-		questionId = csvReader.getColumnValue("Question ID");
 		question = label+"_"+itemCount;
-		String responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question Type"));
+		responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question Type"));
 		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question Type"));
 
 		if (StringUtils.isBlank(responseType) || StringUtils.isBlank(dataType)) {
@@ -89,19 +88,14 @@ public class XLSWriterImpl implements XLSWriter {
 		//for show/hide form data
 		if (csvReader.getColumnValue("Parent Type").equals("A")) {
 			String parentAnsId = csvReader.getColumnValue("Parent ID");
-			ArrayList<String> answerDataList = queAnswersMap.get(parentAnsId);
-			String condition = String.join(",", answerDataList);
-			String message = "Only provide answer if subject is" + answerDataList.get(1);
-
-			setCellValue("ITEM_DISPLAY_STATUS", "Hide");
-			setCellValue("SIMPLE_CONDITIONAL_DISPLAY", condition + "," +message);
+			addShowHideCells(parentAnsId);
 		}
 		answersList.clear();
 	}
 
 	public void addResponseTextAndValue(String answerId,String answer) {
 		addResponses(answer);
-		createQueAnswersMap(answerId, answer, questionId, question);
+		createQueAnswersMap(answerId, answer, question, responseType);
 		String responseText = String.join(",", answersList);
 
 		Cell cellResponseText = row.getCell(15);
@@ -127,10 +121,27 @@ public class XLSWriterImpl implements XLSWriter {
 		IOUtils.closeQuietly(out);
 	}
 
-	private void createQueAnswersMap(String answerId, String answer, String queId, String que ) {
+	private void addShowHideCells(String parentAnsId) {
+		ArrayList<String> answerDataList = queAnswersMap.get(parentAnsId);
+		String responseType = answerDataList.get(2);
+
+		if (responseType != null) {
+			if (responseType.equals("single-select") || responseType.equals("multi-select") ||
+					responseType.equals("radio")) {
+				String condition = answerDataList.get(0) +"," + answerDataList.get(1);
+				String message = "Only provide answer if subject is" + answerDataList.get(1);
+
+				setCellValue("ITEM_DISPLAY_STATUS", "Hide");
+				setCellValue("SIMPLE_CONDITIONAL_DISPLAY", condition + "," +message);
+			}
+		}
+	}
+
+	private void createQueAnswersMap(String answerId, String answer, String que, String responsetype ) {
 		ArrayList<String> answerDataList = new ArrayList<String>();
 		answerDataList.add(que);
 		answerDataList.add(answer);
+		answerDataList.add(responsetype);
 		queAnswersMap.put(answerId, answerDataList);
 	}
 
