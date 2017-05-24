@@ -72,14 +72,16 @@ public class ConnUtilsImpl implements ConnUtils {
 		return uniqueProtocolID;
 	}
 
-	public String createSite(String siteTitle, String siteId, String studyId, String apiKey) {
+	public String createSite(String siteTitle, String siteId, String studyId, String apiKey, String username) {
 		HttpURLConnection conn = null;
 		OutputStream outputStream = null;
 		BufferedReader bufferedReader = null;
 		String uniqueProtocolID = null;
 		try {
 			String studyUniqueId = studyUId.get(studyId);
-			String siteUrl =new String("http://localhost:8080/OpenClinica/pages/auth/api/v1/studies/"+studyUniqueId+"/sites");
+			String siteUrl = new String("http://localhost:8080/OpenClinica/pages/auth/api/v1/studies/"+
+					studyUniqueId +"/sites");
+
 			URL url = new URL(siteUrl);
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setDoOutput(true);
@@ -88,16 +90,17 @@ public class ConnUtilsImpl implements ConnUtils {
 			conn.setRequestProperty ("Authorization", "Basic " + apiKey);
 
 			siteTitle = siteTitle.replaceAll("[\"\']", "");
-			uniqueProtocolID = siteTitle.substring(0, Math.min(siteTitle.length(), 10)) 
+			uniqueProtocolID = siteTitle.substring(0, Math.min(siteTitle.length(), 8)) 
 					+ "_" + siteId + "_" + studyId ;
 			uniqueProtocolID = uniqueProtocolID.replaceAll("[^a-zA-Z0-9]", "_");
-			String input ="{\"briefTitle\": \""+siteTitle+"\"," +
+			String input ="{\"briefTitle\": \""+ siteTitle +"\"," +
 					"\"principalInvestigator\": \"userz\", "+
 					"\"expectedTotalEnrollment\": \"10\","+
-					"\"assignUserRoles\": [{ \"username\" : \"usera\", \"role\" : \"Clinical Research Coordinator\"}]," +
-					"\"uniqueProtocolID\": \""+uniqueProtocolID+"\"," +
+					"\"assignUserRoles\": [{ \"username\" : \""+ username +
+					"\", \"role\" : \"Clinical Research Coordinator\"}]," +
+					"\"uniqueProtocolID\": \""+ uniqueProtocolID +"\"," +
 					"\"startDate\": \"2017-06-11\"," +
-					"\"secondaryProtocolID\" : \""+uniqueProtocolID+"_2\" ," +
+					"\"secondaryProtocolID\" : \""+ uniqueProtocolID +"_2\" ," +
 					"\"protocolDateVerification\" : \"2017-05-14\"}";
 
 			outputStream = conn.getOutputStream();

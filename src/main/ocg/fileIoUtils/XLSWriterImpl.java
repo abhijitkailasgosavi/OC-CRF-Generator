@@ -68,7 +68,7 @@ public class XLSWriterImpl implements XLSWriter {
 		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question Type"));
 
 		if (StringUtils.isBlank(responseType) || StringUtils.isBlank(dataType)) {
-			CRFGeneratorImpl.logger.error("Question Type is wrong at line " +
+			CRFGeneratorImpl.logger.error("Error: Question Type is wrong at line " +
 					csvReader.getCurrentRowCount());
 		}
 
@@ -82,6 +82,11 @@ public class XLSWriterImpl implements XLSWriter {
 		setCellValue("RESPONSE_OPTIONS_TEXT", "");
 		setCellValue("RESPONSE_VALUES_OR_CALCULATIONS", "");
 		setCellValue("DATA_TYPE", dataType);
+
+		String queMandatory = csvReader.getColumnValue("Question Mandatory");
+		if (queMandatory.equals("1st and 2nd Data Entry") || queMandatory.equals("1st Data Entry")) {
+			setCellValue("REQUIRED", "1");
+		}
 
 		CRFGeneratorImpl.logger.info("Question row is created with title" + label);
 
@@ -97,6 +102,10 @@ public class XLSWriterImpl implements XLSWriter {
 		addResponses(answer);
 		createQueAnswersMap(answerId, answer, question, responseType);
 		String responseText = String.join(",", answersList);
+		if (row == null) {
+			CRFGeneratorImpl.logger.error("Error: Question is not created");
+			return;
+		}
 
 		Cell cellResponseText = row.getCell(15);
 		Cell cellResponseValue = row.getCell(16);

@@ -47,7 +47,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					String siteName = csvReader.getColumnValue("Title");
 					String siteId =  csvReader.getColumnValue("Site ID");
 					String parentStudyId = csvReader.getColumnValue("Parent ID");
-					siteUniqueId = connUtils.createSite(siteName, siteId, parentStudyId,apiKey);
+					siteUniqueId = connUtils.createSite(siteName, siteId, parentStudyId,apiKey,username);
 				} else if (csvReader.getColumnValue("Type").equals("CRF")) {
 					xlsWriter.crfWriter(crf);
 					String filename = getCrfName();
@@ -71,6 +71,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 			logger.info("Task completed");
 		} catch (Exception e) {
 			logger.error("Error in generateCRF method " + e.getMessage());
+			e.printStackTrace();
 		} finally {
 			csvReader.close();
 			xlsWriter.close();

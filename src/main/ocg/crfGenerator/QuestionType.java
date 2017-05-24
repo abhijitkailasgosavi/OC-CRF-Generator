@@ -1,7 +1,7 @@
 package ocg.crfGenerator;
 
 public enum QuestionType {
-	Select_one("ST", "single-select"),
+	Select_one("ST", "radio"),
 
 	Number("INT", "text"), 
 
