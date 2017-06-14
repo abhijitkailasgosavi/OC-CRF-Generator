@@ -1,6 +1,9 @@
 package ocg.crfGenerator;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -25,7 +28,7 @@ public class CRFGeneratorImpl implements CRFGenerator {
 
 	private CsvReaderImpl csvReader;
 
-	public void generateCrf(String inputCsv, String username, String password) {
+	public void generateCrf(String inputCsv, String answerValues, String username, String password) {
 		XLSReader xlsReader = new XLSReaderImpl(DEF_CRF_TEMPLATE_FILE);
 		csvReader = new CsvReaderImpl(inputCsv);
 		XLSWriter xlsWriter = new XLSWriterImpl();
@@ -38,15 +41,16 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		try {
 			HSSFWorkbook crf = null;
 			String apiKey = connUtils.getUserApiKey(username, password);
+			Map<String, String> answerValuesMap = answerValues(answerValues);
 			while (csvReader.hasNextRow()) {
 				if (csvReader.getColumnValue("Type").equals("Study")) {
 					String studyName = csvReader.getColumnValue("Title");
-					String studyId =  csvReader.getColumnValue("Study ID");
+					String studyId =  csvReader.getColumnValue("Study.ID");
 					studyUniqueId = connUtils.createStudy(studyName, studyId,apiKey);
 				}  else if (csvReader.getColumnValue("Type").equals("Site")) {
 					String siteName = csvReader.getColumnValue("Title");
-					String siteId =  csvReader.getColumnValue("Site ID");
-					String parentStudyId = csvReader.getColumnValue("Parent ID");
+					String siteId =  csvReader.getColumnValue("Site.ID");
+					String parentStudyId = csvReader.getColumnValue("Parent.ID");
 					siteUniqueId = connUtils.createSite(siteName, siteId, parentStudyId,apiKey,username);
 				} else if (csvReader.getColumnValue("Type").equals("CRF")) {
 					xlsWriter.crfWriter(crf);
@@ -57,14 +61,15 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					xlsWriter.addCrfDetails(csvReader.getColumnValue("Title"));
 					itemCount = 0;
 
-					String[] crfDetails = {studyUniqueId,siteUniqueId,filename};
+					String[] crfDetails = {studyUniqueId, siteUniqueId, filename};
 					listCrfs.writeCrfDetails(crfDetails);
 				} else if (csvReader.getColumnValue("Type").equals("Q")) {
 					xlsWriter.addItem(xlsReader, csvReader, ++itemCount);
 				} else if (csvReader.getColumnValue("Type").equals("A")) {
 					String title = csvReader.getColumnValue("Title");
-					String answerId = csvReader.getColumnValue("Answer ID");
-					xlsWriter.addResponseTextAndValue(answerId,title);					
+					String answerId = csvReader.getColumnValue("Answer.ID");
+					String answerValue = answerValuesMap.get(title);
+					xlsWriter.addResponseTextAndValue(answerId, title, answerValue);
 				}
 			}
 			xlsWriter.crfWriter(crf);
@@ -96,5 +101,16 @@ public class CRFGeneratorImpl implements CRFGenerator {
 		String filename = csvReader.getColumnValue("Title") + ".xls";
 		filename = filename.replaceAll("/", "\\\\");
 		return filename; 
+	}
+
+	private Map<String, String> answerValues(String fileName) {
+		CsvReaderImpl csvReader = new CsvReaderImpl(fileName);
+		Map<String, String> answerValues = new HashMap<String, String>();
+
+		while (csvReader.hasNextRow()) {
+			answerValues.put(csvReader.getColumnValue("Title"),csvReader.getColumnValue("Label"));
+		}
+
+		return answerValues;
 	}
 }

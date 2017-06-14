@@ -33,6 +33,8 @@ public class XLSWriterImpl implements XLSWriter {
 
 	private List<String> answersList = new ArrayList<String>();
 
+	private List<String> valuesList = new ArrayList<String>();
+
 	private String question;
 
 	private String responseType;
@@ -62,19 +64,24 @@ public class XLSWriterImpl implements XLSWriter {
 
 	public void addItem(XLSReader xlsReader, CsvReader csvReader, Integer itemCount) {
 		row = items.createRow(itemCount);
-		String label =getItemName(csvReader.getColumnValue("Label"));
-		question = label+"_"+itemCount;
-		responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question Type"));
-		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question Type"));
+		String label = getItemName(csvReader.getColumnValue("Title"));
+		question = label + "_" + itemCount;
+		responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question.Type"));
+		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question.Type"));
 
 		if (StringUtils.isBlank(responseType) || StringUtils.isBlank(dataType)) {
 			CRFGeneratorImpl.logger.error("Error: Question Type is wrong at line " +
 					csvReader.getCurrentRowCount());
 		}
 
+		String leftItemText = csvReader.getColumnValue("Design.Title");
+		if (StringUtils.isBlank(leftItemText)) {
+			leftItemText = csvReader.getColumnValue("Title");
+		}
+
 		setCellValue("ITEM_NAME",question);
 		setCellValue("DESCRIPTION_LABEL", csvReader.getColumnValue("Title"));
-		setCellValue("LEFT_ITEM_TEXT", csvReader.getColumnValue("Title"));
+		setCellValue("LEFT_ITEM_TEXT", leftItemText);
 		setCellValue("SECTION_LABEL", xlsReader.getSectionLabel(crf));
 		setCellValue("GROUP_LABEL", xlsReader.getGroupLabel(crf));
 		setCellValue("RESPONSE_TYPE", responseType);
@@ -83,7 +90,7 @@ public class XLSWriterImpl implements XLSWriter {
 		setCellValue("RESPONSE_VALUES_OR_CALCULATIONS", "");
 		setCellValue("DATA_TYPE", dataType);
 
-		String queMandatory = csvReader.getColumnValue("Question Mandatory");
+		String queMandatory = csvReader.getColumnValue("Question.Mandatory");
 		if (queMandatory.equals("1st and 2nd Data Entry") || queMandatory.equals("1st Data Entry")) {
 			setCellValue("REQUIRED", "1");
 		}
@@ -91,17 +98,22 @@ public class XLSWriterImpl implements XLSWriter {
 		CRFGeneratorImpl.logger.info("Question row is created with title" + label);
 
 		//for show/hide form data
-		if (csvReader.getColumnValue("Parent Type").equals("A")) {
-			String parentAnsId = csvReader.getColumnValue("Parent ID");
+		if (csvReader.getColumnValue("Parent.Type").equals("A")) {
+			String parentAnsId = csvReader.getColumnValue("Parent.ID");
 			addShowHideCells(parentAnsId);
 		}
+
 		answersList.clear();
+		valuesList.clear();
 	}
 
-	public void addResponseTextAndValue(String answerId,String answer) {
-		addResponses(answer);
-		createQueAnswersMap(answerId, answer, question, responseType);
+	public void addResponseTextAndValue(String answerId,String answer, String answerValue) {
+		addResponse(answer, answersList);
+		addResponse(answerValue, valuesList);
+
+		createQueAnswersMap(answerId, answer, question, responseType, answerValue);
 		String responseText = String.join(",", answersList);
+		String responseValue = String.join(",", valuesList);
 		if (row == null) {
 			CRFGeneratorImpl.logger.error("Error: Question is not created");
 			return;
@@ -112,7 +124,7 @@ public class XLSWriterImpl implements XLSWriter {
 		cellResponseText.setCellValue("");
 		cellResponseValue.setCellValue("");
 		cellResponseText.setCellValue(responseText);
-		cellResponseValue.setCellValue(responseText);
+		cellResponseValue.setCellValue(responseValue);
 		CRFGeneratorImpl.logger.info("Response is created using answers : " + String.join(",", answersList));
 	}
 
@@ -137,28 +149,32 @@ public class XLSWriterImpl implements XLSWriter {
 		if (responseType != null) {
 			if (responseType.equals("single-select") || responseType.equals("multi-select") ||
 					responseType.equals("radio")) {
-				String condition = answerDataList.get(0) +"," + answerDataList.get(1);
-				String message = "Only provide answer if subject is" + answerDataList.get(1);
+				String condition = answerDataList.get(0) +"," + answerDataList.get(3);
+				String message = "Only provide answer if subject is " + answerDataList.get(1);
 
 				setCellValue("ITEM_DISPLAY_STATUS", "Hide");
-				setCellValue("SIMPLE_CONDITIONAL_DISPLAY", condition + "," +message);
+				setCellValue("SIMPLE_CONDITIONAL_DISPLAY", condition + ", " +message);
 			}
 		}
 	}
 
-	private void createQueAnswersMap(String answerId, String answer, String que, String responsetype ) {
+	private void createQueAnswersMap(String answerId, String answer, String que,
+			String responsetype, String answerValue ) {
 		ArrayList<String> answerDataList = new ArrayList<String>();
 		answerDataList.add(que);
 		answerDataList.add(answer);
 		answerDataList.add(responsetype);
+		answerDataList.add(answerValue);
+
 		queAnswersMap.put(answerId, answerDataList);
 	}
 
-	private void addResponses(String response) {
+	private void addResponse(String response, List<String> list) {
 		if (StringUtils.isBlank(response)) {
 			return;
 		}
-		answersList.add(response);
+
+		list.add(response);
 	}
 
 	private void setCellValue(String columnName, String data) {

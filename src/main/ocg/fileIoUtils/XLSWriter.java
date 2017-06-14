@@ -9,7 +9,7 @@ public interface XLSWriter {
 
 	public void addItem(XLSReader xlsReader, CsvReader csvReader, Integer itemCount);
 
-	public void addResponseTextAndValue(String answer, String answerId);
+	public void addResponseTextAndValue(String answer, String answerId, String answerValue);
 
 	public void crfWriter(HSSFWorkbook samplecrf);
 

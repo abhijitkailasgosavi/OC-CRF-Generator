@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.util.IOUtils;
 
@@ -22,7 +23,7 @@ public class CsvReaderImpl implements CsvReader {
 
 	public CsvReaderImpl(String inputCsv) {
 		try {
-			csvReader = new CSVReader(new FileReader(inputCsv));
+			csvReader = new CSVReader(new FileReader(inputCsv), '\t');
 			createColumnNameIdxMap();
 		} catch (FileNotFoundException e) {
 			IOUtils.closeQuietly(csvReader);
@@ -51,7 +52,7 @@ public class CsvReaderImpl implements CsvReader {
 	}
 
 	public long getCurrentRowCount() {
-		return currentRowCount - 1;
+		return currentRowCount;
 	}
 
 	private void createColumnNameIdxMap() {
