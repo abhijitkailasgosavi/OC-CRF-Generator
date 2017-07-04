@@ -64,7 +64,7 @@ public class XLSWriterImpl implements XLSWriter {
 
 	public void addItem(XLSReader xlsReader, CsvReader csvReader, Integer itemCount) {
 		row = items.createRow(itemCount);
-		String label = getItemName(csvReader.getColumnValue("Title"));
+		String label = getItemName(csvReader.getColumnValue("Label"));
 		question = label + "_" + itemCount;
 		responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question.Type"));
 		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question.Type"));
