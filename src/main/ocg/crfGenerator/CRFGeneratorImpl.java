@@ -66,9 +66,15 @@ public class CRFGeneratorImpl implements CRFGenerator {
 					xlsWriter.addItem(xlsReader, csvReader, ++itemCount);
 				} else if (csvReader.getColumnValue("Type").equals("A")) {
 					String title = csvReader.getColumnValue("Title");
+					String parentId = csvReader.getColumnValue("Parent.ID");
+					String questionId = csvReader.getColumnValue("Question.ID");
 					String answerId = csvReader.getColumnValue("Answer.ID");
 					String answerValue = answerValuesMap.get(title);
-					xlsWriter.addResponseTextAndValue(answerId, title, answerValue);
+					if (parentId.equals(questionId)) {
+						xlsWriter.addResponseTextAndValue(answerId, title, answerValue);
+					} else {
+						xlsWriter.addResponseTextAndValue(parentId, answerId, title, answerValue);
+					}
 				}
 			}
 			xlsWriter.crfWriter(crf);

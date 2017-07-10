@@ -28,6 +28,8 @@ public class XLSWriterImpl implements XLSWriter {
 
 	private Map<String, Integer> headerNameIdxMap = new HashMap<String, Integer>();
 
+	private Map<String, String> questionTitleIdxMap = new HashMap<String, String>();
+
 	//used for show/hide questions
 	private Map<String, ArrayList<String>> queAnswersMap = new HashMap<String, ArrayList<String>>();
 
@@ -65,7 +67,7 @@ public class XLSWriterImpl implements XLSWriter {
 	public void addItem(XLSReader xlsReader, CsvReader csvReader, Integer itemCount) {
 		row = items.createRow(itemCount);
 		String label = getItemName(csvReader.getColumnValue("Label"));
-		question = label + "_" + itemCount;
+		question = label;
 		responseType = QuestionType.getResponseType(csvReader.getColumnValue("Question.Type"));
 		String dataType = QuestionType.getDataType(csvReader.getColumnValue("Question.Type"));
 
@@ -95,8 +97,9 @@ public class XLSWriterImpl implements XLSWriter {
 			setCellValue("REQUIRED", "1");
 		}
 
-		CRFGeneratorImpl.logger.info("Question row is created with title" + label);
+		CRFGeneratorImpl.logger.info("Question row is created with title " + label);
 
+		questionTitleIdxMap.put(csvReader.getColumnValue("Question.ID"), question);
 		//for show/hide form data
 		if (csvReader.getColumnValue("Parent.Type").equals("A")) {
 			String parentAnsId = csvReader.getColumnValue("Parent.ID");
@@ -126,6 +129,33 @@ public class XLSWriterImpl implements XLSWriter {
 		cellResponseText.setCellValue(responseText);
 		cellResponseValue.setCellValue(responseValue);
 		CRFGeneratorImpl.logger.info("Response is created using answers : " + String.join(",", answersList));
+	}
+
+	public void addResponseTextAndValue(String parentId, String answerId, String answer, String answerValue) {
+		int lastRow = items.getLastRowNum();
+		String currentQuestion = questionTitleIdxMap.get(parentId);
+		int i = 0;
+		Row currentQueRow = null;
+		while (i <= lastRow) {
+			currentQueRow = items.getRow(i);
+			if (currentQuestion.equals(currentQueRow.getCell(0).getStringCellValue())) {
+				break;
+			}
+			i++;
+		}
+
+		String QuestionRespnseType = currentQueRow.getCell(13).getStringCellValue();
+		createQueAnswersMap(answerId, answer, currentQuestion, QuestionRespnseType, answerValue);
+		Cell cellResponseText = currentQueRow.getCell(15);
+		Cell cellResponseValue = currentQueRow.getCell(16);
+		String responseText = cellResponseText.getStringCellValue() + "," + answer;
+		String responseValue = cellResponseValue.getStringCellValue() + "," + answerValue;;
+
+		cellResponseText.setCellValue("");
+		cellResponseValue.setCellValue("");
+		cellResponseText.setCellValue(responseText);
+		cellResponseValue.setCellValue(responseValue);
+		CRFGeneratorImpl.logger.info("Response is created using parent answers : " + responseText);
 	}
 
 	public void crfWriter(HSSFWorkbook crf) {
